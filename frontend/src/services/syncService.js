@@ -1,6 +1,7 @@
 import { getPendingSyncOperations, updateSyncOperationStatus, saveIncident, deleteIncident, getAllIncidents } from './dbService';
 
-const API_URL = 'http://localhost:5000/api/incidents';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = `${API_BASE}/incidents`;
 
 export const syncData = async () => {
   if (!navigator.onLine) return { success: false, message: 'Currently offline.' };
@@ -91,22 +92,24 @@ export const reconcileIncidentsWithServer = async (remoteIncidents) => {
     pendingIncidentIds.add(op.incidentId);
   });
 
-  const remoteIds = new Set(remoteIncidents.map(i => i._id));
+  const remoteIds = new Set(remoteIncidents.map(i => String(i._id || i.id)));
 
   // 1. Remove local records that no longer exist on the server
   for (const localInc of localIncidents) {
-    if (!remoteIds.has(localInc.id) && !pendingIncidentIds.has(localInc.id)) {
+    const localId = String(localInc.id);
+    if (!remoteIds.has(localId) && !pendingIncidentIds.has(localId)) {
       await deleteIncident(localInc.id);
     }
   }
 
   // 2. Update existing local records or add new server records
   for (const remoteInc of remoteIncidents) {
+    const remoteId = String(remoteInc._id || remoteInc.id);
     // Protect local records that have pending offline work
-    if (!pendingIncidentIds.has(remoteInc._id)) {
+    if (!pendingIncidentIds.has(remoteId)) {
       await saveIncident({
         ...remoteInc,
-        id: remoteInc._id,
+        id: remoteId,
         syncStatus: 'SYNCED'
       });
     }

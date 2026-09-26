@@ -19,7 +19,8 @@ function FieldWorker() {
   const [pendingCount, setPendingCount] = useState(0);
   const [lastSyncTime, setLastSyncTime] = useState(localStorage.getItem('lastSyncTime'));
 
-  const API_URL = 'http://localhost:5000/api/incidents';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = `${API_BASE}/incidents`;
 
   useEffect(() => {
     const handleOnline = () => {
@@ -217,95 +218,106 @@ function FieldWorker() {
       peopleAffected: incident.peopleAffected
     });
     setMessage('');
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <h1>ResilSync Field Worker</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ 
-            padding: '5px 10px', 
-            borderRadius: '4px', 
-            backgroundColor: isOnline ? '#e6ffe6' : '#ffe6e6',
-            color: isOnline ? '#008000' : '#cc0000',
-            fontWeight: 'bold',
-            border: `1px solid ${isOnline ? '#00cc00' : '#ff0000'}`
-          }}>
-            {isOnline ? 'ONLINE' : 'OFFLINE'}
-          </div>
-          {pendingCount > 0 ? (
-             <div style={{ color: '#d97706', fontWeight: 'bold' }}>
-               Pending Sync: {pendingCount}
-             </div>
+      <div className="header-bar">
+        <div>
+          <h1>Field Worker Portal</h1>
+          {lastSyncTime && <p>Last Sync: {new Date(lastSyncTime).toLocaleString()}</p>}
+        </div>
+        <div className="flex-gap" style={{ alignItems: 'center' }}>
+          {isOnline ? (
+            <span className="badge badge-online">
+              <span className="badge-indicator"></span> ONLINE
+            </span>
           ) : (
-             <div style={{ color: '#666', fontWeight: 'bold' }}>
-               All changes synchronized
-             </div>
+            <span className="badge badge-offline">
+              <span className="badge-indicator"></span> OFFLINE
+            </span>
           )}
-          <button onClick={handleSync} disabled={!isOnline || pendingCount === 0} style={{ padding: '6px 12px', cursor: (isOnline && pendingCount > 0) ? 'pointer' : 'not-allowed' }}>
+          
+          {pendingCount > 0 ? (
+             <span className="badge badge-warning">
+               <span className="badge-indicator"></span> PENDING SYNC: {pendingCount}
+             </span>
+          ) : (
+             <span className="badge badge-neutral">
+               All Synced
+             </span>
+          )}
+          <button 
+            className="btn btn-primary" 
+            onClick={handleSync} 
+            disabled={!isOnline || pendingCount === 0}
+          >
             Sync Now
           </button>
         </div>
       </div>
       
-      {lastSyncTime && <div style={{ marginBottom: '20px', color: '#666', fontSize: '0.9em' }}>Last Sync: {new Date(lastSyncTime).toLocaleString()}</div>}
-      
-      {message && <div style={{ padding: '10px', backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', marginBottom: '20px' }}>{message}</div>}
+      {message && <div className="alert">{message}</div>}
 
-      <div style={{ marginBottom: '2rem', padding: '1.5rem', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h2>{editingId ? 'Update Incident' : 'Report New Incident'}</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '500px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label>Worker ID: </label>
-            <input name="workerId" value={formData.workerId} onChange={handleChange} required style={{ padding: '8px' }} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label>Disaster Type: </label>
-            <select name="type" value={formData.type} onChange={handleChange} style={{ padding: '8px' }}>
-              <option value="Flood">Flood</option>
-              <option value="Cyclone">Cyclone</option>
-              <option value="Landslide">Landslide</option>
-              <option value="Heavy Rainfall">Heavy Rainfall</option>
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-              <label>Latitude: </label>
-              <input name="latitude" type="number" step="any" value={formData.latitude} onChange={handleChange} required style={{ padding: '8px' }} />
+      <div className="card" style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ marginBottom: '1.5rem' }}>{editingId ? 'Update Incident' : 'Report New Incident'}</h2>
+        <form onSubmit={handleSubmit} className="flex-col" style={{ gap: '1.25rem' }}>
+          
+          <div className="form-grid">
+            <div className="flex-col">
+              <label>Worker ID</label>
+              <input name="workerId" value={formData.workerId} onChange={handleChange} required />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-              <label>Longitude: </label>
-              <input name="longitude" type="number" step="any" value={formData.longitude} onChange={handleChange} required style={{ padding: '8px' }} />
+            <div className="flex-col">
+              <label>Disaster Type</label>
+              <select name="type" value={formData.type} onChange={handleChange}>
+                <option value="Flood">Flood</option>
+                <option value="Cyclone">Cyclone</option>
+                <option value="Landslide">Landslide</option>
+                <option value="Heavy Rainfall">Heavy Rainfall</option>
+              </select>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-              <label>Severity: </label>
-              <select name="severity" value={formData.severity} onChange={handleChange} style={{ padding: '8px' }}>
+
+          <div className="form-grid">
+            <div className="flex-col">
+              <label>Latitude</label>
+              <input name="latitude" type="number" step="any" value={formData.latitude} onChange={handleChange} required />
+            </div>
+            <div className="flex-col">
+              <label>Longitude</label>
+              <input name="longitude" type="number" step="any" value={formData.longitude} onChange={handleChange} required />
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <div className="flex-col">
+              <label>Severity</label>
+              <select name="severity" value={formData.severity} onChange={handleChange}>
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
                 <option value="Critical">Critical</option>
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-              <label>People Affected: </label>
-              <input name="peopleAffected" type="number" value={formData.peopleAffected} onChange={handleChange} required style={{ padding: '8px' }} />
+            <div className="flex-col">
+              <label>People Affected</label>
+              <input name="peopleAffected" type="number" value={formData.peopleAffected} onChange={handleChange} required />
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label>Description: </label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} style={{ padding: '8px' }}></textarea>
+
+          <div className="flex-col">
+            <label>Description</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={4}></textarea>
           </div>
           
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="submit" style={{ padding: '10px 15px', backgroundColor: '#0056b3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          <div className="flex-gap" style={{ marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary">
               {editingId ? 'Update Incident' : 'Submit Incident'}
             </button>
             {editingId && (
-              <button type="button" onClick={resetForm} style={{ padding: '10px 15px', backgroundColor: '#ccc', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+              <button type="button" onClick={resetForm} className="btn btn-secondary">
                 Cancel
               </button>
             )}
@@ -315,27 +327,48 @@ function FieldWorker() {
 
       <div>
         <h2>Reported Incidents</h2>
-        {incidents.length === 0 ? <p>No incidents reported yet.</p> : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {incidents.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📝</div>
+            <h3>No incidents reported yet</h3>
+            <p>Use the form above to submit a new incident report.</p>
+          </div>
+        ) : (
+          <div className="flex-col" style={{ gap: '1.25rem' }}>
             {incidents.map(incident => (
-              <div key={incident.id || incident._id} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fafafa' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <strong>ID: {incident.id || incident._id}</strong>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+              <div key={incident.id || incident._id} className="incident-card">
+                <div className="incident-header">
+                  <strong style={{ fontFamily: 'monospace' }}>ID: {incident.id || incident._id}</strong>
+                  <div className="flex-gap" style={{ alignItems: 'center', gap: '0.5rem' }}>
                     {incident.syncStatus === 'PENDING' && (
-                       <span style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '2px 8px', borderRadius: '10px', fontSize: '0.85em', fontWeight: 'bold' }}>PENDING SYNC</span>
+                       <span className="badge badge-warning">PENDING SYNC</span>
                     )}
-                    <span style={{ backgroundColor: '#eee', padding: '2px 8px', borderRadius: '10px', fontSize: '0.85em' }}>v{incident.version || 1}</span>
+                    <span className="badge badge-neutral">v{incident.version || 1}</span>
                   </div>
                 </div>
-                <div style={{ marginBottom: '8px' }}><strong>Type:</strong> {incident.type} | <strong>Severity:</strong> {incident.severity}</div>
-                <div style={{ marginBottom: '8px' }}><strong>Location:</strong> {incident.location.latitude}, {incident.location.longitude}</div>
-                <div style={{ marginBottom: '8px' }}><strong>People Affected:</strong> {incident.peopleAffected}</div>
-                <div style={{ marginBottom: '8px', fontStyle: 'italic' }}>{incident.description}</div>
-                <div style={{ fontSize: '0.85em', color: '#666', marginBottom: '10px' }}>Last Updated: {new Date(incident.updatedAt || incident.createdAt).toLocaleString()}</div>
-                <button onClick={() => handleEdit(incident)} style={{ padding: '6px 12px', cursor: 'pointer', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px' }}>
-                  Update
-                </button>
+                
+                <div className="form-grid" style={{ marginBottom: '1rem' }}>
+                  <div className="incident-detail"><strong>Type:</strong> <span style={{ fontWeight: 500 }}>{incident.type}</span></div>
+                  <div className="incident-detail">
+                    <strong>Severity:</strong> 
+                    <span className={`badge badge-${incident.severity.toLowerCase()}`}>
+                      {incident.severity}
+                    </span>
+                  </div>
+                  <div className="incident-detail"><strong>Location:</strong> {incident.location.latitude}, {incident.location.longitude}</div>
+                  <div className="incident-detail"><strong>People Affected:</strong> {incident.peopleAffected}</div>
+                </div>
+                
+                <div className="incident-detail" style={{ fontStyle: 'italic', marginBottom: '1.5rem', lineHeight: 1.6 }}>{incident.description}</div>
+                
+                <div className="incident-header" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
+                  <div style={{ fontSize: '0.85em', color: 'var(--text-secondary)' }}>
+                    Last Updated: {new Date(incident.updatedAt || incident.createdAt).toLocaleString()}
+                  </div>
+                  <button onClick={() => handleEdit(incident)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                    Edit
+                  </button>
+                </div>
               </div>
             ))}
           </div>

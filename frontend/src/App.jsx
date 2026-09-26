@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import FieldWorker from './pages/FieldWorker';
 import AdminDashboard from './pages/AdminDashboard';
 import './index.css';
@@ -9,9 +9,25 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <nav className="navbar">
+          <div className="navbar-brand">🛡️ ResilSync Engine</div>
           <ul>
-            <li><Link to="/">Field Worker</Link></li>
-            <li><Link to="/admin">Admin Dashboard</Link></li>
+            <li>
+              <NavLink 
+                to="/" 
+                className={({ isActive }) => isActive ? "active" : ""}
+                end
+              >
+                Field Worker
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/admin" 
+                className={({ isActive }) => isActive ? "active" : ""}
+              >
+                Admin Dashboard
+              </NavLink>
+            </li>
           </ul>
         </nav>
         <main className="content">
